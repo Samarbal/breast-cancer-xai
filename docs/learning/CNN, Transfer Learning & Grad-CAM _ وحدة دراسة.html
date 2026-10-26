@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CNN, Transfer Learning &amp; Grad-CAM | وحدة دراسة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1f2430;--sub:#4a5160;--page:#fbfaf7;--card:#ffffff;--line:#e3e0d8;
+--tb:#E1F5EE;--tf:#085041;--ta:#1D9E75;
+--cb:#FAECE7;--cf:#712B13;--ca:#D85A30;
+--pb:#EEEDFE;--pf:#3C3489;--pa:#7F77DD;
+--ab:#FAEEDA;--af:#633806;--aa:#BA7517;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#f1efe8;--sub:#b4b2a9;--page:#1c1b19;--card:#262522;--line:#3a3935;
+--tb:#085041;--tf:#9FE1CB;--cb:#712B13;--cf:#F5C4B3;--pb:#3C3489;--pf:#CECBF6;--ab:#633806;--af:#FAC775}}
+:root[data-theme="dark"]{--ink:#f1efe8;--sub:#b4b2a9;--page:#1c1b19;--card:#262522;--line:#3a3935;
+--tb:#085041;--tf:#9FE1CB;--cb:#712B13;--cf:#F5C4B3;--pb:#3C3489;--pf:#CECBF6;--ab:#633806;--af:#FAC775}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Cairo",system-ui,sans-serif;line-height:1.65;font-size:16px}
+main{max-width:860px;margin:0 auto;padding:20px 16px 56px}
+h1{font-size:clamp(26px,5vw,38px);font-weight:800;margin:8px 0 4px;line-height:1.2}
+h2{font-size:24px;font-weight:800;margin:0}
+h3{font-size:17px;font-weight:600;margin:0 0 6px}
+p{margin:0 0 8px}
+.sub{color:var(--sub);margin:0 0 16px}
+.ar{direction:rtl;text-align:right}
+svg{max-width:100%;height:auto;display:block}
+.sec{border-radius:16px;padding:20px;margin:28px 0;background:var(--bg);color:var(--fg)}
+.sec h2{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;margin-bottom:14px}
+.sec h2 span{font-size:20px;font-weight:600}
+.t{--bg:var(--tb);--fg:var(--tf);--ac:var(--ta)}
+.c{--bg:var(--cb);--fg:var(--cf);--ac:var(--ca)}
+.p{--bg:var(--pb);--fg:var(--pf);--ac:var(--pa)}
+.a{--bg:var(--ab);--fg:var(--af);--ac:var(--aa)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:var(--card);color:var(--ink);border:1px solid var(--line);border-top:5px solid var(--ac);border-radius:10px;padding:14px}
+.card h3{color:var(--fg)}
+.step{display:flex;gap:12px;align-items:flex-start;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.step b.n{flex:0 0 34px;height:34px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-weight:800}
+.step p{margin:0 0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{background:var(--card);color:var(--fg);border:2px solid var(--ac);border-radius:999px;padding:4px 14px;font-weight:600;font-size:15px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.note{border:2px dashed var(--ac);border-radius:10px;padding:10px 14px;margin-top:12px;background:var(--card);color:var(--ink)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 14px}
+.flow i{font-style:normal;color:var(--fg);font-weight:800}
+.flow span{padding:6px 14px;border-radius:8px;font-weight:600;font-size:15px}
+.f1{background:#E1F5EE;color:#085041}.f2{background:#FAECE7;color:#712B13}.f3{background:#EEEDFE;color:#3C3489}.f4{background:#FAEEDA;color:#633806}.f0{background:#F1EFE8;color:#444441}
+details{background:var(--card);color:var(--ink);border:1px solid var(--line);border-left:6px solid var(--ac);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+summary{cursor:pointer;font-weight:600;color:var(--fg)}
+summary:focus-visible{outline:3px solid var(--ac);outline-offset:3px}
+ol{margin:6px 0;padding-left:22px}
+</style>
+</head>
+<body>
+<main>
+<h1>CNN, Transfer Learning &amp; Grad-CAM</h1>
+<p class="ar" lang="ar" style="font-size:22px;font-weight:600;margin:0 0 6px">وحدة دراسة مدمجة: CNN و Transfer Learning و Grad-CAM</p>
+<p class="sub">Explainable AI for Breast Cancer Histopathology Image Classification. One map from image to heatmap.</p>
+
+<svg viewBox="0 0 680 190" role="img" aria-label="Neural network drawing: image, three pretrained convolution layers in teal, a new coral layer, and a Benign or Malignant output in amber">
+<g stroke="#1D9E75" stroke-width="0.6" opacity="0.45">
+<line x1="76" y1="95" x2="150" y2="40"/><line x1="76" y1="95" x2="150" y2="95"/><line x1="76" y1="95" x2="150" y2="150"/>
+<line x1="170" y1="40" x2="250" y2="40"/><line x1="170" y1="40" x2="250" y2="95"/><line x1="170" y1="95" x2="250" y2="40"/><line x1="170" y1="95" x2="250" y2="95"/><line x1="170" y1="95" x2="250" y2="150"/><line x1="170" y1="150" x2="250" y2="95"/><line x1="170" y1="150" x2="250" y2="150"/>
+<line x1="270" y1="40" x2="350" y2="40"/><line x1="270" y1="40" x2="350" y2="95"/><line x1="270" y1="95" x2="350" y2="40"/><line x1="270" y1="95" x2="350" y2="95"/><line x1="270" y1="95" x2="350" y2="150"/><line x1="270" y1="150" x2="350" y2="95"/><line x1="270" y1="150" x2="350" y2="150"/>
+</g>
+<g stroke="#D85A30" stroke-width="0.6" opacity="0.5">
+<line x1="370" y1="40" x2="450" y2="65"/><line x1="370" y1="40" x2="450" y2="125"/><line x1="370" y1="95" x2="450" y2="65"/><line x1="370" y1="95" x2="450" y2="125"/><line x1="370" y1="150" x2="450" y2="65"/><line x1="370" y1="150" x2="450" y2="125"/>
+<line x1="470" y1="65" x2="550" y2="55"/><line x1="470" y1="65" x2="550" y2="135"/><line x1="470" y1="125" x2="550" y2="55"/><line x1="470" y1="125" x2="550" y2="135"/>
+</g>
+<rect x="30" y="68" width="46" height="54" rx="6" fill="#D3D1C7" stroke="#5F5E5A" stroke-width="0.8"/>
+<g fill="#5DCAA5" stroke="#0F6E56" stroke-width="1"><circle cx="160" cy="40" r="11"/><circle cx="160" cy="95" r="11"/><circle cx="160" cy="150" r="11"/><circle cx="260" cy="40" r="11"/><circle cx="260" cy="95" r="11"/><circle cx="260" cy="150" r="11"/><circle cx="360" cy="40" r="11"/><circle cx="360" cy="95" r="11"/><circle cx="360" cy="150" r="11"/></g>
+<g fill="#F0997B" stroke="#993C1D" stroke-width="1"><circle cx="460" cy="65" r="11"/><circle cx="460" cy="125" r="11"/></g>
+<g fill="#EF9F27" stroke="#854F0B" stroke-width="1"><circle cx="560" cy="55" r="11"/><circle cx="560" cy="135" r="11"/></g>
+<g font-family="Cairo,sans-serif" font-size="12" fill="currentColor">
+<text x="53" y="136" text-anchor="middle">Image</text><text x="260" y="182" text-anchor="middle">Pretrained CNN</text><text x="460" y="150" text-anchor="middle">New layer</text>
+<text x="580" y="59">Benign</text><text x="580" y="139">Malignant</text></g>
+</svg>
+
+<section class="sec t">
+<h2>1. CNN <span class="ar" lang="ar">الشبكة الالتفافية</span></h2>
+<p>A CNN scans the image with small windows instead of reading every pixel at once. This needs far fewer parameters than a fully connected network and sees that nearby pixels belong together.</p>
+<p class="ar" lang="ar">الـ CNN بتفحص الصورة بنوافذ صغيرة بدل ما تقرأ كل البكسلات دفعة وحدة. هيك بتحتاج Parameters أقل بكثير وبتفهم إنه البكسلات القريبة من بعض مرتبطة.</p>
+<div class="grid">
+<div class="card"><h3>Convolution + Filter</h3><p>A small matrix slides over the image and detects one pattern. The result is a Feature Map. Filters are learned, not designed by hand.</p><p class="ar" lang="ar">مصفوفة صغيرة بتمشي على الصورة وبتكشف نمط معين. الناتج Feature Map. الـ Filters بتتعلمها الشبكة لحالها.</p></div>
+<div class="card"><h3>ReLU</h3><p>Removes negative values so the network can learn non-linear relationships.</p><p class="ar" lang="ar">بتحذف القيم السالبة وبتخلي الشبكة تتعلم علاقات غير خطية.</p></div>
+<div class="card"><h3>Pooling</h3><p>Shrinks the Feature Map and keeps the strongest signal. Less computation, more tolerance to small shifts.</p><p class="ar" lang="ar">بتصغّر الـ Feature Map وبتحتفظ بأقوى إشارة. حسابات أقل وتحمّل أكبر للإزاحة.</p></div>
+<div class="card"><h3>Fully Connected</h3><p>Turns the final features into a decision: Benign or Malignant.</p><p class="ar" lang="ar">بتحول الـ Features النهائية لقرار: Benign أو Malignant.</p></div>
+</div>
+<div class="chips">
+<span class="chip">Early: edges, stain color</span>
+<span class="chip">Middle: nuclei shapes</span>
+<span class="chip">Deep: gland arrangement</span>
+</div>
+<p class="ar" lang="ar">كل ما نمشي لطبقات أعمق، الـ Features بتصير أعقد: حواف وألوان، بعدين أشكال الأنوية، بعدين ترتيب الغدد.</p>
+</section>
+
+<section class="sec c">
+<h2>2. Transfer Learning <span class="ar" lang="ar">نقل التعلّم</span></h2>
+<p>BreaKHis has about 7,900 images from 82 patients. That is too small to train a deep CNN from scratch. So we start from a model pretrained on ImageNet (1.2 million images) and adapt it.</p>
+<p class="ar" lang="ar">BreaKHis فيها حوالي 7,900 صورة من 82 مريض، وهذا قليل لتدريب CNN عميقة من الصفر. فبنبدأ من نموذج متدرب مسبقًا على ImageNet (1.2 مليون صورة) وبنعدّله.</p>
+<div class="two">
+<div class="card"><h3>Feature Extraction</h3><p>Freeze all pretrained layers. Train only the new final layer. Best for a very small dataset.</p><p class="ar" lang="ar">نجمّد كل الطبقات القديمة وندرب الطبقة الجديدة بس. مناسب لـ Dataset صغيرة جدًا.</p></div>
+<div class="card"><h3>Fine-tuning</h3><p>Train the new layer first, then unfreeze some or all layers with a small Learning Rate. Better when images differ from ImageNet, as ours do.</p><p class="ar" lang="ar">ندرب الطبقة الجديدة أولًا، بعدين نفك تجميد بعض الطبقات بـ Learning Rate صغير. أفضل لما الصور مختلفة عن ImageNet، زي حالتنا.</p></div>
+</div>
+<div class="note"><p><b>Domain gap:</b> ImageNet is natural photos, ours is stained tissue under a microscope. General features still help, but the deeper layers need to adapt.</p><p class="ar" lang="ar"><b>Domain gap:</b> ImageNet صور طبيعية وإحنا أنسجة مصبوغة تحت المجهر. الـ Features العامة بتفيد لكن الطبقات العميقة لازم تتأقلم.</p></div>
+</section>
+
+<section class="sec p">
+<h2>3. Grad-CAM <span class="ar" lang="ar">خريطة التفسير</span></h2>
+<p>Grad-CAM shows which regions of the image pushed the model toward its answer. It works on the last convolutional layer and needs no retraining.</p>
+<p class="ar" lang="ar">Grad-CAM بيوضح أي مناطق بالصورة دفعت النموذج لجوابه. بيشتغل على آخر Convolutional Layer وما بيحتاج إعادة تدريب.</p>
+<div class="step"><b class="n">1</b><div><p><b>Forward pass:</b> get the raw score of the target class.</p><p class="ar" lang="ar">نمرر الصورة ونأخذ الـ Score الخام للـ Class الهدف.</p></div></div>
+<div class="step"><b class="n">2</b><div><p><b>Gradients:</b> how much does the score change if each Feature Map value changes?</p><p class="ar" lang="ar">قديش الـ Score بيتغير لو تغيرت قيم كل Feature Map؟</p></div></div>
+<div class="step"><b class="n">3</b><div><p><b>Weights:</b> average each map’s gradients to get one importance weight per map.</p><p class="ar" lang="ar">متوسط الـ Gradients لكل Map يعطينا وزن أهمية لكل Map.</p></div></div>
+<div class="step"><b class="n">4</b><div><p><b>Combine:</b> weighted sum of the maps, then ReLU, then upsample and overlay on the image.</p><p class="ar" lang="ar">مجموع موزون للـ Maps، ثم ReLU، ثم تكبير وفوقها على الصورة.</p></div></div>
+<div class="two">
+<div class="card"><h3>What it shows</h3><p>Where the model looked for one prediction.</p><p class="ar" lang="ar">وين النموذج ركّز لـ Prediction واحد.</p></div>
+<div class="card"><h3>What it does not prove</h3><p>That the prediction is correct, or that the reason is clinical. The map is coarse (7×7 for ResNet at 224×224) and depends on the chosen layer.</p><p class="ar" lang="ar">إنه الـ Prediction صح، أو إنه السبب طبي. الخريطة خشنة وبتعتمد على الطبقة المختارة.</p></div>
+</div>
+</section>
+
+<section class="sec a">
+<h2>4. In our project <span class="ar" lang="ar">بمشروعنا</span></h2>
+<div class="flow">
+<span class="f0">BreaKHis image</span><i>→</i><span class="f0">Preprocessing</span><i>→</i><span class="f1">Pretrained CNN</span><i>→</i><span class="f2">New final layer</span><i>→</i><span class="f4">Class + Score</span><i>→</i><span class="f3">Grad-CAM heatmap</span><i>→</i><span class="f0">Evaluation</span>
+</div>
+<div class="grid">
+<div class="card"><h3>Patient-level split</h3><p>All images of one patient go to Train or Test, never both. Otherwise data leakage inflates results.</p><p class="ar" lang="ar">صور المريض الواحد كلها إما Train أو Test. وإلا بيصير Data Leakage.</p></div>
+<div class="card"><h3>Class imbalance</h3><p>More malignant than benign images, so accuracy alone misleads. Report Precision, Recall, F1, Confusion Matrix.</p><p class="ar" lang="ar">الصور الخبيثة أكثر من الحميدة، فالـ Accuracy لحالها مضللة.</p></div>
+<div class="card"><h3>Error analysis</h3><p>Look at heatmaps of wrong predictions to spot stain or background shortcuts.</p><p class="ar" lang="ar">نفحص Heatmaps التنبؤات الغلط لنكتشف اعتماد على الصبغة أو الخلفية.</p></div>
+</div>
+<div class="note"><p>We do not claim clinical benefit. We build a prototype and evaluate classification and explanation quality.</p><p class="ar" lang="ar">ما بنقول إنه النظام بيفيد سريريًا. بنبني Prototype ونقيّم التصنيف وجودة التفسير.</p></div>
+</section>
+
+<section class="sec t">
+<h2>5. Defend it <span class="ar" lang="ar">استعدي للدكتور</span></h2>
+<details><summary>Why CNN? | ليش CNN؟</summary><p>It extracts spatial features from images with far fewer parameters than a fully connected network.</p><p class="ar" lang="ar">بتستخرج Features مكانية من الصور بعدد Parameters أقل بكثير.</p></details>
+<details><summary>Why Transfer Learning? | ليش Transfer Learning؟</summary><p>The medical dataset is small; training from scratch would overfit. We reuse general features from a very large dataset.</p><p class="ar" lang="ar">بياناتنا الطبية صغيرة والتدريب من الصفر بيعمل Overfitting. بنستفيد من Features عامة.</p></details>
+<details><summary>Why Fine-tuning? | ليش Fine-tuning؟</summary><p>Microscopic tissue differs from ImageNet, so deeper layers must adapt.</p><p class="ar" lang="ar">الصور المجهرية مختلفة عن ImageNet فالطبقات العميقة لازم تتأقلم.</p></details>
+<details><summary>Does a good heatmap mean a correct prediction? | Heatmap حلوة يعني Prediction صح؟</summary><p>No. It shows where the model looked, not whether it is right. We back it with metrics and error analysis.</p><p class="ar" lang="ar">لا. بتوضح وين النموذج ركّز مش إذا هو صح. بندعمها بـ Metrics وتحليل أخطاء.</p></details>
+<details><summary>Is the Model Score the probability of cancer? | هل الـ Score احتمال السرطان؟</summary><p>No. It is the model’s output score and may be poorly calibrated. It is not a clinical probability.</p><p class="ar" lang="ar">لا. هو Score مخرجات النموذج وممكن يكون مش Calibrated. مش احتمال سريري.</p></details>
+</section>
+</main>
+</body>
+</html>
